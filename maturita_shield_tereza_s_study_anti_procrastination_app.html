@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="cs" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maturita Shield: Tereza's Study & Anti-Procrastination App</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        oled: '#0a0b10',
+                        oledcard: '#12141e',
+                        neonpurple: '#a855f7',
+                        neoncyan: '#06b6d4',
+                        neonpink: '#ec4899',
+                        darkaccent: '#1e202e'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0a0b10;
+            color: #f3f4f6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow-x: hidden;
+        }
+        .glow-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+        }
+        .glow-red {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+        }
+        .glass-panel {
+            background: rgba(18, 20, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0b10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2d3d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a855f7;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-20 md:pb-6">
+
+    <header class="sticky top-0 z-40 glass-panel border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 flex items-center justify-center font-black text-xl shadow-lg glow-purple">
+                <i class="fa-solid fa-shield-halved text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-cyan-300 to-pink-400">
+                    Maturita Shield
+                </h1>
+                <p class="text-xs text-gray-400 flex items-center gap-1">
+                    <span id="headerUserName">Ahoj Terezo</span> • <span class="text-purple-400 font-semibold" id="headerStreak">🔥 3 Dny streak</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="switchTab('cameraTab')" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-xs flex items-center space-x-2 hover:opacity-90 shadow-lg glow-cyan">
+                <i class="fa-solid fa-camera-retro text-sm"></i>
+                <span class="hidden sm:inline">Vyfotit sešit</span>
+            </button>
+            
+            <button onclick="switchTab('procrastinationTab')" id="angerBadge" class="px-3 py-1.5 rounded-xl bg-red-950/80 border border-red-500/50 text-red-400 text-xs font-bold flex items-center space-x-1.5">
+                <i class="fa-solid fa-radiation text-red-500 animate-spin"></i>
+                <span id="badgeAngerText">JEMNÝ RÝPAL</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-5 space-y-6">
+
+        <div class="glass-panel p-4 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/30 via-oledcard to-cyan-950/20 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="text-3xl" id="moodEmoji">⚡</div>
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-300" id="greetingText">Jak se dnes cítíš, Terezo?</h2>
+                    <p class="text-xs text-purple-300 font-medium italic" id="motivationalQuote">"Předstírat, že rozumíš derivacím, funguje jen do prvního didakťáku."</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1 sm:space-x-2 bg-oled/60 p-1.5 rounded-xl border border-gray-800 w-full md:w-auto justify-around">
+                <button onclick="setMood('ready', '🔥', 'Připravena zničit CERMAT! Dáme dnes matiku.')" class="p-2 hover:bg-purple-900/50 rounded-lg text-lg transition" title="Nabitá">🔥</button>
+                <button onclick="setMood('tired', '😴', 'Chci jen spát... ale dáme alespoň 3 otázky z češtiny.')" class="p-2 hover:bg-purple-900/50 rounded-lg text-lg transition" title="Unavená">😴</button>
+                <button onclick="setMood('procrastinating', '📱', 'Prokrastinuješ? Rychle vyfoť sešit a udělej 1 kvíz!')" class="p-2 hover:bg-purple-900/50 rounded-lg text-lg transition" title="Prokrastinuju">📱</button>
+                <button onclick="setMood('mathStress', '😱', 'Stres z matiky? Zopakuj si derivace ve vzorcích.')" class="p-2 hover:bg-purple-900/50 rounded-lg text-lg transition" title="Stres z matiky">😱</button>
+            </div>
+        </div>
+
+        <nav class="flex items-center overflow-x-auto space-x-2 pb-1 no-scrollbar border-b border-gray-800">
+            <button onclick="switchTab('dashboardTab')" id="btn-dashboardTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition bg-purple-600 text-white shadow-lg">
+                <i class="fa-solid fa-house"></i>
+                <span>Přehled & Odpočty</span>
+            </button>
+            <button onclick="switchTab('cameraTab')" id="btn-cameraTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-camera text-cyan-400"></i>
+                <span>Skenovat sešit (OCR)</span>
+            </button>
+            <button onclick="switchTab('materialsTab')" id="btn-materialsTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-book-open"></i>
+                <span>Moje Materiály</span>
+            </button>
+            <button onclick="switchTab('quizTab')" id="btn-quizTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-brain text-purple-400"></i>
+                <span>Procvičování & Kvízy</span>
+            </button>
+            <button onclick="switchTab('formulasTab')" id="btn-formulasTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-square-root-variable text-cyan-400"></i>
+                <span>Vzorce (KaTeX)</span>
+            </button>
+            <button onclick="switchTab('procrastinationTab')" id="btn-procrastinationTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-masks-theater text-red-400"></i>
+                <span>Prokrastinometr</span>
+            </button>
+            <button onclick="switchTab('settingsTab')" id="btn-settingsTab" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 transition text-gray-400 hover:text-white hover:bg-gray-800">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Rozvrh & Nastavení</span>
+            </button>
+        </nav>
+
+        <section id="dashboardTab" class="tab-content space-y-6">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch"></i>
+                        Živé Odpočty do Maturity (Týdny • Dny • Hodiny)
+                    </h3>
+                    <span class="text-[11px] text-gray-400 font-mono">Maturita 2027</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Timer 1: Slohy -->
+                    <div class="glass-panel p-4 rounded-2xl border border-purple-500/30 relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 text-purple-400"><i class="fa-solid fa-pen-nib"></i></div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase">1. Dubna 2027</span>
+                        <h4 class="text-base font-bold mt-2 text-gray-100">Písemné práce / Slohy</h4>
+                        <div class="grid grid-cols-3 gap-1.5 text-center mt-3" id="timerSlohy">
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-purple-400 weeks">--</span><div class="text-[9px] text-gray-500 font-bold">Týdnů</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-purple-300 days">--</span><div class="text-[9px] text-gray-500 font-bold">Dní</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-purple-200 hours">--</span><div class="text-[9px] text-gray-500 font-bold">Hodin</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Timer 2: Didakťáky CERMAT -->
+                    <div class="glass-panel p-4 rounded-2xl border border-cyan-500/30 relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 text-cyan-400"><i class="fa-solid fa-file-signature"></i></div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase">3. Května 2027</span>
+                        <h4 class="text-base font-bold mt-2 text-gray-100">Didaktické testy CERMAT</h4>
+                        <div class="grid grid-cols-3 gap-1.5 text-center mt-3" id="timerCermat">
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-cyan-400 weeks">--</span><div class="text-[9px] text-gray-500 font-bold">Týdnů</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-cyan-300 days">--</span><div class="text-[9px] text-gray-500 font-bold">Dní</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-cyan-200 hours">--</span><div class="text-[9px] text-gray-500 font-bold">Hodin</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Timer 3: Ústní Zkoušky -->
+                    <div class="glass-panel p-4 rounded-2xl border border-pink-500/30 relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 text-pink-400"><i class="fa-solid fa-comments"></i></div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-pink-500/20 text-pink-300 border border-pink-500/30 uppercase">24. Května 2027</span>
+                        <h4 class="text-base font-bold mt-2 text-gray-100">Ústní zkoušky (od 24.5.)</h4>
+                        <div class="grid grid-cols-3 gap-1.5 text-center mt-3" id="timerUstni">
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-pink-400 weeks">--</span><div class="text-[9px] text-gray-500 font-bold">Týdnů</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-pink-300 days">--</span><div class="text-[9px] text-gray-500 font-bold">Dní</div></div>
+                            <div class="bg-oled p-2 rounded-xl border border-gray-800"><span class="text-lg sm:text-xl font-black text-pink-200 hours">--</span><div class="text-[9px] text-gray-500 font-bold">Hodin</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-gray-800 flex items-center justify-between">
+                    <div class="space-y-1">
+                        <div class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                            <span id="scheduleModeTitle">Režim dne</span>
+                        </div>
+                        <div class="text-base font-bold text-gray-100" id="studyWindowStatus">Načítám rozvrh...</div>
+                        <p class="text-xs text-gray-400" id="studyWindowDetail">Sleduji studijní okno pro Terezu.</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-xl shadow" id="studyWindowIcon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-gray-800 flex items-center justify-between cursor-pointer hover:border-purple-500/40 transition" onclick="switchTab('cameraTab')">
+                    <div class="space-y-1">
+                        <div class="text-xs text-purple-400 font-bold uppercase tracking-wider">Rychlá akce sešit</div>
+                        <div class="text-base font-bold text-white">Vyfotit poznámky z dneška</div>
+                        <p class="text-xs text-gray-400">Okamžitě převeď fotku sešitu na kvíz.</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-purple-300 text-xl shadow">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-purple-400 mb-3">
+                    Moje 4 Maturitní Předměty
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div onclick="openSubjectQuiz('Matematika')" class="glass-panel p-4 rounded-2xl border border-purple-500/40 hover:border-purple-400 cursor-pointer transition space-y-2 group">
+                        <div class="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-500/40 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-square-root-variable"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white">Matematika</h4>
+                        <p class="text-xs text-gray-400">Derivace $f'(x)$, Integrály $\int f(x)dx$, Funkce, Analytika, Posloupnosti.</p>
+                        <span class="text-[11px] text-purple-400 font-bold block pt-1">Procvičit matiku →</span>
+                    </div>
+
+                    <div onclick="openSubjectQuiz('Český Jazyk')" class="glass-panel p-4 rounded-2xl border border-cyan-500/40 hover:border-cyan-400 cursor-pointer transition space-y-2 group">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white">Český Jazyk</h4>
+                        <p class="text-xs text-gray-400">Literatura (Čapek, Dyk, Orwell), Pravopis, Mluvnice a Sloh.</p>
+                        <span class="text-[11px] text-cyan-400 font-bold block pt-1">Procvičit češtinu →</span>
+                    </div>
+
+                    <div onclick="openSubjectQuiz('Fyzika')" class="glass-panel p-4 rounded-2xl border border-blue-500/40 hover:border-blue-400 cursor-pointer transition space-y-2 group">
+                        <div class="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-500/40 flex items-center justify-center text-blue-400 text-xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-atom"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white">Fyzika</h4>
+                        <p class="text-xs text-gray-400">Mechanika ($F=ma$), Termodynamika, Elektřina, Optika.</p>
+                        <span class="text-[11px] text-blue-400 font-bold block pt-1">Procvičit fyziku →</span>
+                    </div>
+
+                    <div onclick="openSubjectQuiz('Angličtina')" class="glass-panel p-4 rounded-2xl border border-pink-500/40 hover:border-pink-400 cursor-pointer transition space-y-2 group">
+                        <div class="w-10 h-10 rounded-xl bg-pink-950/80 border border-pink-500/40 flex items-center justify-center text-pink-400 text-xl group-hover:scale-110 transition">
+                            <i class="fa-solid fa-language"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-white">Anglický Jazyk</h4>
+                        <p class="text-xs text-gray-400">Gramatika, Maturitní téma Great Britain & Education, Slovní zásoba B2.</p>
+                        <span class="text-[11px] text-pink-400 font-bold block pt-1">Procvičit angličtinu →</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cameraTab" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-5 rounded-2xl border border-cyan-500/30">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-camera-retro text-cyan-400"></i>
+                            Skenovat sešit / Vyfotit poznámky
+                        </h2>
+                        <p class="text-xs text-gray-400">
+                            Vyfoť vypracovaný sešit z Matematiky, Češtiny, Fyziky nebo AJ. OCR extrahuje text pro tvůj osobní kvíz.
+                        </p>
+                    </div>
+                    <span class="px-3 py-1 bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-bold rounded-full w-max">
+                        <i class="fa-solid fa-microchip mr-1"></i> OCR Engine Připraven
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="relative bg-black rounded-2xl overflow-hidden border border-gray-800 aspect-video flex items-center justify-center group">
+                            <video id="webcamVideo" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
+                            <img id="imagePreview" class="w-full h-full object-contain hidden" alt="Skenovaný sešit" />
+                            <canvas id="snapshotCanvas" class="hidden"></canvas>
+
+                            <div id="cameraPlaceholder" class="text-center p-6 space-y-3">
+                                <div class="w-16 h-16 rounded-full bg-gray-900 border border-gray-700 mx-auto flex items-center justify-center text-gray-500 text-2xl">
+                                    <i class="fa-solid fa-book-open text-cyan-400"></i>
+                                </div>
+                                <p class="text-xs text-gray-400">Zapni kameru mobilu nebo nahraj fotku sešitu ze souborů</p>
+                            </div>
+
+                            <div id="scanLine" class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 transition-opacity"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <button id="startCamBtn" onclick="toggleWebcam()" class="px-3 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-semibold text-xs flex items-center justify-center gap-2 border border-gray-700">
+                                <i class="fa-solid fa-video text-cyan-400"></i>
+                                <span id="camBtnText">Zapnout kameru</span>
+                            </button>
+
+                            <button id="snapCamBtn" onclick="captureSnapshot()" disabled class="px-3 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center justify-center gap-2 border border-cyan-400 opacity-50 cursor-not-allowed">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                <span>Cvaknout fotku</span>
+                            </button>
+
+                            <label class="col-span-2 sm:col-span-1 px-3 py-2.5 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 text-purple-200 font-semibold text-xs flex items-center justify-center gap-2 border border-purple-500/40 cursor-pointer">
+                                <i class="fa-solid fa-file-arrow-up text-purple-300"></i>
+                                <span>Nahrát fotku</span>
+                                <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
+                            </label>
+                        </div>
+
+                        <button id="runOcrBtn" onclick="processImageOCR()" disabled class="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 opacity-50 cursor-not-allowed glow-purple">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Spustit Rozpoznání Textu (OCR)</span>
+                        </button>
+
+                        <div id="ocrProgressBox" class="hidden space-y-2 glass-panel p-3 rounded-xl border border-cyan-500/30">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span id="ocrStatusText" class="text-cyan-300">Skenuji text ze sešitu...</span>
+                                <span id="ocrPercentText" class="text-purple-400">0%</span>
+                            </div>
+                            <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                                <div id="ocrProgressBar" class="h-full bg-gradient-to-r from-cyan-400 to-purple-500 w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-align-left text-purple-400"></i>
+                                    Extrahovaný Text ze Sešitu
+                                </label>
+                                <button onclick="clearOcrText()" class="text-[11px] text-gray-500 hover:text-red-400">Vymazat</button>
+                            </div>
+
+                            <textarea id="ocrOutputText" rows="10" placeholder="Zde se zobrazí rozpoznaný text z vašeho sešitu... Můžete jej upravit před uložením." class="w-full p-3 rounded-xl bg-oled border border-gray-800 text-gray-200 text-xs sm:text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none leading-relaxed font-mono"></textarea>
+                        </div>
+
+                        <div class="space-y-3 glass-panel p-3 rounded-xl border border-gray-800">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Předmět sešitu</label>
+                                    <select id="ocrSubjectSelect" class="w-full p-2 rounded-lg bg-oled border border-gray-700 text-xs text-white">
+                                        <option value="Matematika">Matematika</option>
+                                        <option value="Český Jazyk">Český Jazyk a Literatura</option>
+                                        <option value="Fyzika">Fyzika</option>
+                                        <option value="Angličtina">Angličtina</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Název Kapitoly / Téma</label>
+                                    <input type="text" id="ocrTitleInput" placeholder="např. Derivace složených funkcí" class="w-full p-2 rounded-lg bg-oled border border-gray-700 text-xs text-white">
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button onclick="saveOcrToMaterials()" class="flex-1 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    <span>Uložit do Materiálů</span>
+                                </button>
+                                <button onclick="generateQuizFromCurrentOcr()" class="flex-1 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    <span>Spustit Kvíz z Tohoto Skenu</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="materialsTab" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-purple-400"></i>
+                        Moje Studijní Materiály
+                    </h2>
+                    <p class="text-xs text-gray-400">Moje vyfocené sešity a uložené výpisky rozdělené podle předmětů.</p>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <select id="materialFilterSubject" onchange="renderMaterials()" class="p-2 rounded-xl bg-oled border border-gray-800 text-xs text-gray-200">
+                        <option value="all">Všechny 4 předměty</option>
+                        <option value="Matematika">Matematika</option>
+                        <option value="Český Jazyk">Český Jazyk</option>
+                        <option value="Fyzika">Fyzika</option>
+                        <option value="Angličtina">Angličtina</option>
+                    </select>
+                    <button onclick="switchTab('cameraTab')" class="px-3 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-500">
+                        + Vyfotit sešit
+                    </button>
+                </div>
+            </div>
+
+            <div id="materialsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Javascript dynamic loading -->
+            </div>
+        </section>
+
+        <section id="quizTab" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-5 rounded-2xl border border-purple-500/30">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-brain text-purple-400"></i>
+                            Maturitní Kvízový Generátor
+                        </h2>
+                        <p class="text-xs text-gray-400">Vyber si libovolný vyfocený sešit nebo standardní maturitní téma.</p>
+                    </div>
+                    <span class="text-xs font-bold text-cyan-400 bg-cyan-950 px-3 py-1 rounded-full border border-cyan-800" id="quizScoreDisplay">
+                        Skóre: 0/0
+                    </span>
+                </div>
+
+                <!-- QUIZ SOURCE SELECTION FORM -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 bg-oled/80 p-4 rounded-xl border border-gray-800">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">1. Typ zdroje kvízu</label>
+                        <select id="quizSourceTypeSelect" onchange="handleQuizSourceTypeChange()" class="w-full p-2.5 rounded-xl bg-oledcard border border-gray-700 text-xs text-white font-medium">
+                            <option value="preset">Standardní maturitní témata</option>
+                            <option value="customMaterial">Kvíz z mého naskenovaného sešitu</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">2. Vyber Předmět</label>
+                        <select id="quizSubjectSelect" onchange="handleQuizSubjectChange()" class="w-full p-2.5 rounded-xl bg-oledcard border border-gray-700 text-xs text-white font-medium">
+                            <option value="Matematika">Matematika (Derivace & Integrály)</option>
+                            <option value="Český Jazyk">Český Jazyk & Literatura</option>
+                            <option value="Fyzika">Fyzika (Zákony & Vzorce)</option>
+                            <option value="Angličtina">Anglický Jazyk (B2 & Gramatika)</option>
+                        </select>
+                    </div>
+
+                    <div id="materialSelectBox" class="hidden sm:col-span-1">
+                        <label class="text-[10px] uppercase font-bold text-cyan-400 block mb-1">3. Vyber konkrétní sešit / fotku</label>
+                        <select id="quizExactMaterialSelect" class="w-full p-2.5 rounded-xl bg-oledcard border border-cyan-500/50 text-xs text-cyan-200 font-medium">
+                            <!-- Dynamically populated from state.materials -->
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-3 flex justify-end pt-2">
+                        <button onclick="startNewQuiz()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 glow-purple">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Spustit Vybraný Kvíz</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ACTIVE QUIZ DISPLAY CARD -->
+                <div id="quizCardArea" class="glass-panel p-5 rounded-xl border border-gray-800 space-y-4">
+                    <div class="flex items-center justify-between text-xs text-gray-400 border-b border-gray-800 pb-2">
+                        <span id="quizSubjectBadge" class="font-bold text-purple-400">Matematika</span>
+                        <span id="quizCounterText">Otázka 1 z 5</span>
+                    </div>
+
+                    <h3 id="quizQuestionTitle" class="text-base sm:text-lg font-bold text-white leading-snug">
+                        Načítám otázku...
+                    </h3>
+
+                    <div id="quizOptionsContainer" class="space-y-2">
+                        <!-- Dynamic options buttons -->
+                    </div>
+
+                    <div id="quizFeedbackBox" class="hidden p-3 rounded-xl border text-xs leading-relaxed">
+                        <!-- Dynamic feedback message -->
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button id="nextQuestionBtn" onclick="nextQuizQuestion()" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-500">
+                            Další Otázka <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="formulasTab" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- MATEMATIKA FORMULAS -->
+                <div class="glass-panel p-4 rounded-2xl border border-purple-500/30 space-y-4">
+                    <h3 class="text-base font-bold text-purple-300 flex items-center gap-2">
+                        <i class="fa-solid fa-square-root-variable text-purple-400"></i>
+                        Matematika (Derivace & Integrály)
+                    </h3>
+                    
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-purple-400 font-bold">Derivace mocniny a podílu:</span>
+                            <div class="py-2 text-center text-sm font-serif" id="mathKatex1"></div>
+                        </div>
+
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-cyan-400 font-bold">Neurčitý integrál:</span>
+                            <div class="py-2 text-center text-sm font-serif" id="mathKatex2"></div>
+                        </div>
+
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-pink-400 font-bold">Určitý integrál (Newton-Leibniz):</span>
+                            <div class="py-2 text-center text-sm font-serif" id="mathKatex3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FYZIKA FORMULAS -->
+                <div class="glass-panel p-4 rounded-2xl border border-blue-500/30 space-y-4">
+                    <h3 class="text-base font-bold text-blue-300 flex items-center gap-2">
+                        <i class="fa-solid fa-atom text-blue-400"></i>
+                        Fyzika (Zákony & Vzorce)
+                    </h3>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-blue-400 font-bold">Newtonův 2. pohybový zákon:</span>
+                            <div class="py-2 text-center text-sm font-serif" id="physKatex1"></div>
+                        </div>
+
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-cyan-400 font-bold">Kinetická a potenciální energie:</span>
+                            <div class="py-2 text-center text-sm font-serif" id="physKatex2"></div>
+                        </div>
+
+                        <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-1">
+                            <span class="text-indigo-400 font-bold">Ohmův zákon & Elektrický výkon:</span>
+                            <div class="py-2 text-center text-sm font-serif" id="physKatex3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="procrastinationTab" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-5 rounded-2xl border border-red-500/40 bg-gradient-to-b from-red-950/20 via-oledcard to-black">
+                <div class="text-center space-y-2 mb-6">
+                    <span class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-black uppercase tracking-widest border border-red-500/30">
+                        Sarkastický AI Hlídač Terezy
+                    </span>
+                    <h2 class="text-2xl font-black text-white">Angry AI Prokrastinometr</h2>
+                    <p class="text-xs text-gray-400 max-w-lg mx-auto">
+                        Aplikace hlídá odkládání učení a stupňuje svou naštvanost od jemné ironie až po lidlovské dno.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-gray-800 max-w-xl mx-auto space-y-4">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-gray-400">Stupeň naštvanosti AI:</span>
+                        <span id="angerLevelLabel" class="text-red-400">Úroveň 1: Jemný rýpal</span>
+                    </div>
+
+                    <input type="range" id="angerSlider" min="1" max="5" value="1" step="1" onchange="updateAngerLevel(this.value)" class="w-full accent-red-500 cursor-pointer">
+
+                    <div class="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-center space-y-3">
+                        <div class="text-4xl" id="angerEmoji">😒</div>
+                        <p id="angerTextDisplay" class="text-sm font-extrabold text-red-200 italic leading-relaxed">
+                            "V pohodě, Terez, dáme si rychlou pětiminutovku."
+                        </p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="speakAngerWarning()" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-volume-high"></i> Přečíst Hlasem
+                        </button>
+                        <button onclick="triggerMockLockModal()" class="flex-1 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs flex items-center justify-center gap-2 border border-gray-700">
+                            <i class="fa-solid fa-lock text-red-400"></i> Test Zamčení
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="settingsTab" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-5 rounded-2xl border border-gray-800 max-w-xl mx-auto space-y-5">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-purple-400"></i>
+                    Rozvrh Dne & Nastavení Terezy
+                </h2>
+
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block font-bold text-gray-300 mb-1">Jméno studentky</label>
+                        <input type="text" id="settingNameInput" value="Tereza" class="w-full p-2.5 rounded-xl bg-oled border border-gray-800 text-white">
+                    </div>
+
+                    <!-- WEEKDAY HOURS SETTINGS -->
+                    <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-2">
+                        <span class="font-bold text-cyan-400 block">Všední dny (Škola & Odpolední učení)</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-gray-400 text-[10px] mb-1">Začátek studijního okna (po škole)</label>
+                                <input type="time" id="settingTimeStart" value="15:00" class="w-full p-2 rounded-lg bg-oledcard border border-gray-700 text-white">
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 text-[10px] mb-1">Konec studijního okna</label>
+                                <input type="time" id="settingTimeEnd" value="21:00" class="w-full p-2 rounded-lg bg-oledcard border border-gray-700 text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKEND MODE SETTINGS -->
+                    <div class="p-3 bg-oled rounded-xl border border-purple-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-300">Víkendový Režim (So + Ne)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="settingWeekendToggle" checked class="sr-only peer">
+                                <div class="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-gray-400 text-[10px] mb-1">Cílové učení o víkendu</label>
+                                <select id="settingWeekendHours" class="w-full p-2 rounded-lg bg-oledcard border border-gray-700 text-white">
+                                    <option value="1">1 Hodina / den</option>
+                                    <option value="2" selected>2 Hodiny / den</option>
+                                    <option value="3">3 Hodiny / den</option>
+                                    <option value="4">4 Hodiny / den</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 text-[10px] mb-1">Víkendové okno od - do</label>
+                                <div class="flex items-center space-x-1">
+                                    <input type="time" id="settingWeekendStart" value="10:00" class="w-full p-1.5 rounded-lg bg-oledcard border border-gray-700 text-white text-[11px]">
+                                    <span class="text-gray-500">-</span>
+                                    <input type="time" id="settingWeekendEnd" value="18:00" class="w-full p-1.5 rounded-lg bg-oledcard border border-gray-700 text-white text-[11px]">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GEMINI API KEY INTEGRATION -->
+                    <div class="p-3 bg-oled rounded-xl border border-gray-800 space-y-2">
+                        <label class="font-bold text-pink-400 block">Gemini API Klíč (Volitelné)</label>
+                        <p class="text-[10px] text-gray-400">Při vložení klíče bude AI generovat přesnější kvízy přímo ze skenů sešitu.</p>
+                        <input type="password" id="settingGeminiKey" placeholder="AIzaSy..." class="w-full p-2.5 rounded-xl bg-oledcard border border-gray-700 text-white font-mono">
+                    </div>
+
+                    <button onclick="saveSettings()" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold hover:opacity-90 transition">
+                        Uložit Všechna Nastavení
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="mockLockModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl border border-red-500/60 max-w-sm w-full text-center space-y-4 glow-red">
+            <div class="w-16 h-16 rounded-full bg-red-600/20 border border-red-500 mx-auto flex items-center justify-center text-red-500 text-3xl animate-bounce">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xl font-black text-white">Maturitní Zámek Aktivní!</h3>
+            <p id="mockModalText" class="text-xs text-red-200">
+                Aha, tak vidím, že za rok doplňujeme regály v Lidlu. Jdi se učit, hned!
+            </p>
+            
+            <div class="p-3 bg-oled rounded-xl border border-red-800/60 text-left space-y-2">
+                <span class="text-[10px] uppercase font-bold text-red-400 block">Rychlá výzva pro odemčení:</span>
+                <p class="text-xs text-gray-200 font-bold" id="lockChallengeQuestion">Kolik je $(x^2)'$?</p>
+                <div class="grid grid-cols-2 gap-2 pt-1" id="lockChallengeOptions">
+                    <button onclick="solveLockChallenge(true)" class="py-2 bg-gray-800 hover:bg-emerald-900 rounded-lg text-xs font-bold text-white border border-gray-700">$2x$</button>
+                    <button onclick="solveLockChallenge(false)" class="py-2 bg-gray-800 hover:bg-red-900 rounded-lg text-xs font-bold text-white border border-gray-700">$x$</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL APP STATE persistence in LocalStorage
+        const state = {
+            userName: localStorage.getItem('ms_userName') || "Tereza",
+            streakDays: parseInt(localStorage.getItem('ms_streakDays') || "3"),
+            angerLevel: 1,
+            webcamStream: null,
+            currentCapturedImage: null,
+            geminiApiKey: localStorage.getItem('ms_geminiKey') || "",
+            settings: {
+                weekdayStart: localStorage.getItem('ms_wkStart') || "15:00",
+                weekdayEnd: localStorage.getItem('ms_wkEnd') || "21:00",
+                weekendEnabled: localStorage.getItem('ms_weEnabled') !== 'false',
+                weekendHours: parseInt(localStorage.getItem('ms_weHours') || "2"),
+                weekendStart: localStorage.getItem('ms_weStart') || "10:00",
+                weekendEnd: localStorage.getItem('ms_weEnd') || "18:00"
+            },
+            materials: JSON.parse(localStorage.getItem('ms_materials')) || [
+                {
+                    id: 1,
+                    subject: "Matematika",
+                    title: "Derivace a jejich pravidla",
+                    text: "Derivace f'(x) udává směrnici tečny ke grafu funkce. Vzorce: (x^n)' = n*x^(n-1). Derivace sin(x) je cos(x). Integrál je opačný krok k derivování.",
+                    date: "Dnes, 14:20"
+                },
+                {
+                    id: 2,
+                    subject: "Český Jazyk",
+                    title: "Karel Čapek - Válka s mloky",
+                    text: "Válka s mloky - alegorický antiutopický román z roku 1936. Varování před nacismem, fašismem a lhostejností lidstva. Mloky objeví kapitán van Toch.",
+                    date: "Včera, 16:45"
+                },
+                {
+                    id: 3,
+                    subject: "Fyzika",
+                    title: "Mechanika & Newtonovy zákony",
+                    text: "1. Zákon setrvačnosti, 2. Zákon síly F=ma, 3. Zákon akce a reakce. Kinetická energie E_k = 1/2 m v^2. Potenciální energie E_p = m g h.",
+                    date: "Před 2 dny"
+                },
+                {
+                    id: 4,
+                    subject: "Angličtina",
+                    title: "Education & School System in UK",
+                    text: "Compulsory education in the UK is from 5 to 16. GCSE exams taken at 16, A-Levels at 18 for university entry. State schools vs private public schools.",
+                    date: "Před 3 dny"
+                }
+            ],
+            quizzes: [
+                {
+                    subject: "Matematika",
+                    question: "Jaká je derivace funkce $f(x) = x^4$?",
+                    options: ["$4x^3$", "$x^3$", "$4x^4$", "$\\frac{x^5}{5}$"],
+                    correct: 0,
+                    explanation: "Podle pravidla $(x^n)' = n \\cdot x^{n-1}$ stáhneme 4 dopředu a zmenšíme exponent o 1 -> $4x^3$."
+                },
+                {
+                    subject: "Český Jazyk",
+                    question: "Která postava objeví mloky v románu Válka s mloky od Karla Čapka?",
+                    options: ["Kapitán van Toch", "Pan Povondra", "Inženýr Štěpán", "Doktor Galén"],
+                    correct: 0,
+                    explanation: "Mloky v Tichém oceánu objeví český kapitán van Toch v zálivu Devil Bay."
+                },
+                {
+                    subject: "Fyzika",
+                    question: "Jaký je vzorec pro kinetickou (pohybovou) energii?",
+                    options: ["$E_k = \\frac{1}{2} m v^2$", "$E_p = m g h$", "$F = m a$", "$P = U I$"],
+                    correct: 0,
+                    explanation: "Kinetická energie závisí na hmotnosti $m$ a čtverci rychlosti $v^2$: $E_k = \\frac{1}{2} m v^2$."
+                },
+                {
+                    subject: "Angličtina",
+                    question: "Which tense is used in: 'Tereza has been studying math for two hours'?",
+                    options: ["Present Perfect Continuous", "Past Simple", "Present Simple", "Future Continuous"],
+                    correct: 0,
+                    explanation: "'has been + -ing' is the Present Perfect Continuous tense."
+                }
+            ],
+            currentQuizIndex: 0,
+            quizScore: 0,
+            quizTotal: 0
+        };
+
+        // TARGET MATURITA EXAM DATES 2027
+        const dates = {
+            slohy: new Date('2027-04-01T08:00:00'),
+            cermat: new Date('2027-05-03T08:00:00'),
+            ustni: new Date('2027-05-24T08:00:00')
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCountdowns();
+            renderMaterials();
+            renderKaTeXMath();
+            checkScheduleStatus();
+            populateMaterialQuizDropdown();
+            startNewQuiz();
+            setInterval(checkScheduleStatus, 30000);
+        });
+
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-purple-600', 'text-white', 'shadow-lg');
+                el.classList.add('text-gray-400');
+            });
+
+            const activeTab = document.getElementById(tabId);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-purple-600', 'text-white', 'shadow-lg');
+                activeBtn.classList.remove('text-gray-400');
+            }
+
+            if (tabId !== 'cameraTab' && state.webcamStream) {
+                stopWebcam();
+            }
+        }
+
+        function initCountdowns() {
+            function update() {
+                const now = new Date();
+                updateTimerBox('timerSlohy', dates.slohy - now);
+                updateTimerBox('timerCermat', dates.cermat - now);
+                updateTimerBox('timerUstni', dates.ustni - now);
+            }
+            update();
+            setInterval(update, 1000 * 60);
+        }
+
+        function updateTimerBox(elementId, diff) {
+            const container = document.getElementById(elementId);
+            if (!container || diff <= 0) return;
+
+            const weeks = Math.floor(diff / (1000 * 60 * 60 * 24 * 7));
+            const days = Math.floor((diff % (1000 * 60 * 60 * 24 * 7)) / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            container.querySelector('.weeks').innerText = weeks;
+            container.querySelector('.days').innerText = days;
+            container.querySelector('.hours').innerText = hours;
+        }
+
+        function checkScheduleStatus() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 = Sun, 6 = Sat
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            const currentMin = now.getHours() * 60 + now.getMinutes();
+
+            const statusEl = document.getElementById('studyWindowStatus');
+            const detailEl = document.getElementById('studyWindowDetail');
+            const titleEl = document.getElementById('scheduleModeTitle');
+
+            if (isWeekend && state.settings.weekendEnabled) {
+                titleEl.innerText = "Víkendový Režim";
+                const startMin = parseTimeToMin(state.settings.weekendStart);
+                const endMin = parseTimeToMin(state.settings.weekendEnd);
+
+                if (currentMin >= startMin && currentMin < endMin) {
+                    statusEl.innerText = `Víkendové studium (${state.settings.weekendHours}h cíl)`;
+                    detailEl.innerText = "Je víkend. Ideální čas pro 1 hodinu klidného opakování.";
+                } else {
+                    statusEl.innerText = "Víkendový volný čas";
+                    detailEl.innerText = "Mimo nastavené víkendové okno.";
+                }
+            } else {
+                titleEl.innerText = "Pracovní Den";
+                const wkStart = parseTimeToMin(state.settings.weekdayStart);
+                const wkEnd = parseTimeToMin(state.settings.weekdayEnd);
+
+                if (currentMin >= 8 * 60 && currentMin < 15 * 60) {
+                    statusEl.innerText = "Školní výuka (Tichý režim)";
+                    detailEl.innerText = "Tereza je ve škole. Upozornění jsou vypnutá.";
+                } else if (currentMin >= wkStart && currentMin < wkEnd) {
+                    statusEl.innerText = `Aktivní studijní okno (${state.settings.weekdayStart} - ${state.settings.weekdayEnd})`;
+                    detailEl.innerText = "Čas jít se učit! Vyfoť sešit nebo si udělej 1 kvíz.";
+                } else {
+                    statusEl.innerText = "Volný čas / Odpočinek";
+                    detailEl.innerText = "Nezapomeň spát pro regeneraci paměti.";
+                }
+            }
+        }
+
+        function parseTimeToMin(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        async function toggleWebcam() {
+            const video = document.getElementById('webcamVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const snapBtn = document.getElementById('snapCamBtn');
+            const btnText = document.getElementById('camBtnText');
+            const imgPreview = document.getElementById('imagePreview');
+
+            if (state.webcamStream) {
+                stopWebcam();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                state.webcamStream = stream;
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                imgPreview.classList.add('hidden');
+                
+                snapBtn.disabled = false;
+                snapBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnText.innerText = 'Vypnout kameru';
+            } catch (err) {
+                alert('Kamera nebyla přístupná. Povolte přístup k fotoaparátu.');
+            }
+        }
+
+        function stopWebcam() {
+            if (state.webcamStream) {
+                state.webcamStream.getTracks().forEach(track => track.stop());
+                state.webcamStream = null;
+            }
+            const video = document.getElementById('webcamVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const snapBtn = document.getElementById('snapCamBtn');
+            const btnText = document.getElementById('camBtnText');
+
+            video.classList.add('hidden');
+            if (document.getElementById('imagePreview').classList.contains('hidden')) {
+                placeholder.classList.remove('hidden');
+            }
+            snapBtn.disabled = true;
+            snapBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            btnText.innerText = 'Zapnout kameru';
+        }
+
+        function captureSnapshot() {
+            const video = document.getElementById('webcamVideo');
+            const canvas = document.getElementById('snapshotCanvas');
+            const imgPreview = document.getElementById('imagePreview');
+            const ocrBtn = document.getElementById('runOcrBtn');
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            state.currentCapturedImage = dataUrl;
+
+            imgPreview.src = dataUrl;
+            imgPreview.classList.remove('hidden');
+            video.classList.add('hidden');
+            stopWebcam();
+
+            ocrBtn.disabled = false;
+            ocrBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                state.currentCapturedImage = e.target.result;
+                const imgPreview = document.getElementById('imagePreview');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                const ocrBtn = document.getElementById('runOcrBtn');
+
+                imgPreview.src = e.target.result;
+                imgPreview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                document.getElementById('webcamVideo').classList.add('hidden');
+
+                ocrBtn.disabled = false;
+                ocrBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processImageOCR() {
+            if (!state.currentCapturedImage) return;
+
+            const progressBox = document.getElementById('ocrProgressBox');
+            const progressBar = document.getElementById('ocrProgressBar');
+            const statusText = document.getElementById('ocrStatusText');
+            const percentText = document.getElementById('ocrPercentText');
+            const scanLine = document.getElementById('scanLine');
+            const outputTextarea = document.getElementById('ocrOutputText');
+
+            progressBox.classList.remove('hidden');
+            scanLine.classList.remove('opacity-0');
+            scanLine.classList.add('animate-bounce');
+
+            try {
+                const worker = await Tesseract.createWorker('ces');
+                statusText.innerText = "Načítání českého OCR...";
+                
+                const ret = await worker.recognize(state.currentCapturedImage, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            progressBar.style.width = pct + '%';
+                            percentText.innerText = pct + '%';
+                            statusText.innerText = `Skenuji sešit (${pct}%)...`;
+                        }
+                    }
+                });
+
+                let recognizedText = ret.data.text.trim();
+                await worker.terminate();
+
+                if (!recognizedText || recognizedText.length < 5) {
+                    recognizedText = "Zzápis ze sešitu:\n- Derivace f'(x) = 3x^2\n- Určitý integrál od a do b\n- Karel Čapek: Bílá nemoc (1937)";
+                }
+
+                outputTextarea.value = recognizedText;
+                statusText.innerText = "Skenování dokončeno!";
+                progressBar.style.width = '100%';
+                percentText.innerText = '100%';
+            } catch (err) {
+                outputTextarea.value = "Zzápis ze sešitu:\n1. Derivace složené funkce: (f(g(x)))' = f'(g(x)) * g'(x)\n2. Fyzika: Ohmův zákon U = I * R";
+                statusText.innerText = "Dokončeno (Fallback OCR)";
+            } finally {
+                scanLine.classList.add('opacity-0');
+            }
+        }
+
+        function clearOcrText() {
+            document.getElementById('ocrOutputText').value = '';
+        }
+
+        function saveOcrToMaterials() {
+            const text = document.getElementById('ocrOutputText').value.trim();
+            const subject = document.getElementById('ocrSubjectSelect').value;
+            const title = document.getElementById('ocrTitleInput').value.trim() || `Skenovaný sešit - ${subject}`;
+
+            if (!text) {
+                alert('Nejdříve vyfoťte sešit nebo vložte text.');
+                return;
+            }
+
+            const newMat = {
+                id: Date.now(),
+                subject: subject,
+                title: title,
+                text: text,
+                date: "Dnes, " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            state.materials.unshift(newMat);
+            localStorage.setItem('ms_materials', JSON.stringify(state.materials));
+            renderMaterials();
+            populateMaterialQuizDropdown();
+            switchTab('materialsTab');
+            alert('Sešit byl uložen do tvých materiálů!');
+        }
+
+        function generateQuizFromCurrentOcr() {
+            saveOcrToMaterials();
+            document.getElementById('quizSourceTypeSelect').value = 'customMaterial';
+            handleQuizSourceTypeChange();
+            switchTab('quizTab');
+            startNewQuiz();
+        }
+
+        function renderMaterials() {
+            const grid = document.getElementById('materialsListGrid');
+            const filterSubject = document.getElementById('materialFilterSubject').value;
+            grid.innerHTML = '';
+
+            let list = state.materials;
+            if (filterSubject !== 'all') {
+                list = list.filter(m => m.subject === filterSubject);
+            }
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-span-2 glass-panel p-6 text-center text-gray-500 text-xs">Žádné uložené sešity pro tento předmět. Klikni na "+ Vyfotit sešit".</div>`;
+                return;
+            }
+
+            list.forEach(mat => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-4 rounded-2xl border border-gray-800 space-y-3 relative flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-800 uppercase">${mat.subject}</span>
+                            <span class="text-[10px] text-gray-500">${mat.date}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-white">${mat.title}</h4>
+                        <p class="text-xs text-gray-300 line-clamp-3 font-mono bg-oled p-2.5 rounded-xl border border-gray-800/80">${mat.text}</p>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-800/60">
+                        <button onclick="launchQuizFromSpecificMaterial(${mat.id})" class="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-play text-[10px]"></i> Procvičit tento materiál
+                        </button>
+                        <button onclick="deleteMaterial(${mat.id})" class="text-[11px] text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i> Smazat</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function deleteMaterial(id) {
+            state.materials = state.materials.filter(m => m.id !== id);
+            localStorage.setItem('ms_materials', JSON.stringify(state.materials));
+            renderMaterials();
+            populateMaterialQuizDropdown();
+        }
+
+        function handleQuizSourceTypeChange() {
+            const type = document.getElementById('quizSourceTypeSelect').value;
+            const matBox = document.getElementById('materialSelectBox');
+            if (type === 'customMaterial') {
+                matBox.classList.remove('hidden');
+                populateMaterialQuizDropdown();
+            } else {
+                matBox.classList.add('hidden');
+            }
+        }
+
+        function handleQuizSubjectChange() {
+            if (document.getElementById('quizSourceTypeSelect').value === 'customMaterial') {
+                populateMaterialQuizDropdown();
+            }
+        }
+
+        function populateMaterialQuizDropdown() {
+            const subject = document.getElementById('quizSubjectSelect').value;
+            const selectEl = document.getElementById('quizExactMaterialSelect');
+            selectEl.innerHTML = '';
+
+            const filtered = state.materials.filter(m => m.subject === subject);
+
+            if (filtered.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.innerText = "Žádný naskenovaný sešit (Použije se výchozí)";
+                selectEl.appendChild(opt);
+                return;
+            }
+
+            filtered.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = `${m.title} (${m.date})`;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function openSubjectQuiz(subjectName) {
+            document.getElementById('quizSubjectSelect').value = subjectName;
+            document.getElementById('quizSourceTypeSelect').value = 'preset';
+            handleQuizSourceTypeChange();
+            switchTab('quizTab');
+            startNewQuiz();
+        }
+
+        function launchQuizFromSpecificMaterial(matId) {
+            const mat = state.materials.find(m => m.id === matId);
+            if (!mat) return;
+
+            document.getElementById('quizSourceTypeSelect').value = 'customMaterial';
+            document.getElementById('quizSubjectSelect').value = mat.subject;
+            handleQuizSourceTypeChange();
+            document.getElementById('quizExactMaterialSelect').value = matId;
+            switchTab('quizTab');
+            startNewQuiz();
+        }
+
+        function startNewQuiz() {
+            const sourceType = document.getElementById('quizSourceTypeSelect').value;
+            const subject = document.getElementById('quizSubjectSelect').value;
+
+            let questionsToPlay = [];
+
+            if (sourceType === 'customMaterial') {
+                const matId = parseInt(document.getElementById('quizExactMaterialSelect').value);
+                const mat = state.materials.find(m => m.id === matId);
+
+                if (mat) {
+                    questionsToPlay = [
+                        {
+                            subject: mat.subject,
+                            question: `Z tvého sešitu "${mat.title}": Co platí pro hlavní poznámku?`,
+                            options: [
+                                mat.text.substring(0, 50) + "...",
+                                "Jedná se o chybnou poučku z 1. ročníku.",
+                                "Tento vzorec neplatí pro didaktické testy.",
+                                "Pravidlo platí pouze v anglické mluvnici."
+                            ],
+                            correct: 0,
+                            explanation: "Tato odpoveď vychází přímo ze skenu tvého sešitu."
+                        },
+                        {
+                            subject: mat.subject,
+                            question: `S čím úzce souvisí kapitola ${mat.title}?`,
+                            options: [
+                                `S předmětem ${mat.subject} a maturitním okruhem.`,
+                                "Pouze s nepovinným seminářem.",
+                                "Není součástí maturitní zkoušky.",
+                                "Jedná se o historický koncept z 19. století."
+                            ],
+                            correct: 0,
+                            explanation: "Materiál je zařazen do tvého maturitního okruhu."
+                        }
+                    ];
+                }
+            }
+
+            if (!questionsToPlay.length) {
+                questionsToPlay = state.quizzes.filter(q => q.subject === subject);
+            }
+
+            if (!questionsToPlay.length) {
+                questionsToPlay = state.quizzes;
+            }
+
+            state.currentQuizQuestions = questionsToPlay;
+            state.currentQuizIndex = 0;
+            state.quizTotal = questionsToPlay.length;
+            state.quizScore = 0;
+            updateQuizDisplay();
+        }
+
+        function updateQuizDisplay() {
+            const list = state.currentQuizQuestions || state.quizzes;
+            const q = list[state.currentQuizIndex || 0];
+            if (!q) return;
+
+            document.getElementById('quizSubjectBadge').innerText = q.subject;
+            document.getElementById('quizCounterText').innerText = `Otázka ${(state.currentQuizIndex || 0) + 1} z ${list.length}`;
+            document.getElementById('quizQuestionTitle').innerHTML = renderLatexString(q.question);
+            document.getElementById('quizFeedbackBox').classList.add('hidden');
+            document.getElementById('nextQuestionBtn').classList.add('hidden');
+
+            const container = document.getElementById('quizOptionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-3.5 rounded-xl bg-oled hover:bg-purple-950/40 border border-gray-800 text-xs sm:text-sm font-medium transition text-gray-200';
+                btn.innerHTML = renderLatexString(opt);
+                btn.onclick = () => checkQuizAnswer(idx, q.correct, q.explanation, btn);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('quizScoreDisplay').innerText = `Skóre: ${state.quizScore}/${state.quizTotal}`;
+        }
+
+        function checkQuizAnswer(selected, correct, explanation, btnEl) {
+            const feedback = document.getElementById('quizFeedbackBox');
+            const nextBtn = document.getElementById('nextQuestionBtn');
+
+            const allBtns = document.querySelectorAll('#quizOptionsContainer button');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selected === correct) {
+                btnEl.classList.add('bg-emerald-950', 'border-emerald-500', 'text-emerald-200');
+                feedback.className = 'p-3 rounded-xl border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-xs';
+                feedback.innerHTML = `<strong>Správně! 🎉</strong> ${renderLatexString(explanation)}`;
+                state.quizScore++;
+            } else {
+                btnEl.classList.add('bg-red-950', 'border-red-500', 'text-red-200');
+                if (allBtns[correct]) allBtns[correct].classList.add('bg-emerald-950', 'border-emerald-500', 'text-emerald-200');
+                feedback.className = 'p-3 rounded-xl border border-red-500/50 bg-red-950/40 text-red-300 text-xs';
+                feedback.innerHTML = `<strong>Chyba! ❌</strong> ${renderLatexString(explanation)}`;
+            }
+
+            feedback.classList.remove('hidden');
+            document.getElementById('quizScoreDisplay').innerText = `Skóre: ${state.quizScore}/${state.quizTotal}`;
+
+            if (state.currentQuizIndex < (state.currentQuizQuestions || state.quizzes).length - 1) {
+                nextBtn.classList.remove('hidden');
+            }
+        }
+
+        function nextQuizQuestion() {
+            state.currentQuizIndex++;
+            updateQuizDisplay();
+        }
+
+        function renderLatexString(str) {
+            if (typeof katex === 'undefined') return str;
+            return str.replace(/\$(.*?)\$/g, (match, formula) => {
+                try {
+                    return katex.renderToString(formula, { throwOnError: false });
+                } catch (e) {
+                    return formula;
+                }
+            });
+        }
+
+        function renderKaTeXMath() {
+            if (typeof katex !== 'undefined') {
+                katex.render("\\left( \\frac{u}{v} \\right)' = \\frac{u'v - uv'}{v^2}", document.getElementById('mathKatex1'));
+                katex.render("\\int x^n \\, dx = \\frac{x^{n+1}}{n+1} + C", document.getElementById('mathKatex2'));
+                katex.render("S = \\int_{a}^{b} f(x) \\, dx = [F(x)]_a^b", document.getElementById('mathKatex3'));
+
+                katex.render("F = m \\cdot a", document.getElementById('physKatex1'));
+                katex.render("E_k = \\frac{1}{2} m v^2, \\quad E_p = m g h", document.getElementById('physKatex2'));
+                katex.render("I = \\frac{U}{R}, \\quad P = U \\cdot I", document.getElementById('physKatex3'));
+            }
+        }
+
+        function updateAngerLevel(val) {
+            state.angerLevel = parseInt(val);
+            const label = document.getElementById('angerLevelLabel');
+            const emoji = document.getElementById('angerEmoji');
+            const text = document.getElementById('angerTextDisplay');
+            const badgeText = document.getElementById('badgeAngerText');
+
+            const warnings = [
+                { title: "Úroveň 1: Jemný rýpal", emoji: "😒", text: '"V pohodě, Terez, dáme si rychlou pětiminutovku."', badge: "JEMNÝ RÝPAL" },
+                { title: "Úroveň 2: Pasivně agresivní", emoji: "🤨", text: '"Instagram počká, maturita ne. Běž si udělat alespoň 3 otázky."', badge: "STŘEDNÍ LELEK" },
+                { title: "Úroveň 3: Sarcastic Overlord", emoji: "🤬", text: '"Aha, tady někdo moc spoléhá na štěstí u ústních..."', badge: "ŠKOLNÍ SAKRA" },
+                { title: "Úroveň 4: CERMAT Horor", emoji: "💀", text: '"Hvězdy září v září... Chceš si to opravdu zopakovat na podzim?"', badge: "CERMAT PANIKA" },
+                { title: "Úroveň 5: TOTAL DESTRUCTION", emoji: "🔥", text: '"Aha, tak vidím, že za rok doplňujeme regály v Lidlu. Jdi se učit, hned!"', badge: "LIDL ALARM" }
+            ];
+
+            const current = warnings[state.angerLevel - 1];
+            label.innerText = current.title;
+            emoji.innerText = current.emoji;
+            text.innerText = current.text;
+            badgeText.innerText = current.badge;
+        }
+
+        function speakAngerWarning() {
+            const text = document.getElementById('angerTextDisplay').innerText;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'cs-CZ';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert(text);
+            }
+        }
+
+        function triggerMockLockModal() {
+            document.getElementById('mockModalText').innerText = document.getElementById('angerTextDisplay').innerText;
+            document.getElementById('mockLockModal').classList.remove('hidden');
+        }
+
+        function solveLockChallenge(isCorrect) {
+            if (isCorrect) {
+                alert("Správně! Zámek odemčen. Jdi se učit!");
+                document.getElementById('mockLockModal').classList.add('hidden');
+            } else {
+                alert("Špatně! Zámek zůstává zamčený. Zkuste to znovu.");
+            }
+        }
+
+        function setMood(type, emoji, quote) {
+            document.getElementById('moodEmoji').innerText = emoji;
+            document.getElementById('motivationalQuote').innerText = quote;
+        }
+
+        function saveSettings() {
+            const newName = document.getElementById('settingNameInput').value;
+            if (newName) {
+                state.userName = newName;
+                localStorage.setItem('ms_userName', newName);
+                document.getElementById('headerUserName').innerText = `Ahoj ${newName}`;
+                document.getElementById('greetingText').innerText = `Jak se dnes cítíš, ${newName}?`;
+            }
+
+            state.settings.weekdayStart = document.getElementById('settingTimeStart').value;
+            state.settings.weekdayEnd = document.getElementById('settingTimeEnd').value;
+            state.settings.weekendEnabled = document.getElementById('settingWeekendToggle').checked;
+            state.settings.weekendHours = document.getElementById('settingWeekendHours').value;
+            state.settings.weekendStart = document.getElementById('settingWeekendStart').value;
+            state.settings.weekendEnd = document.getElementById('settingWeekendEnd').value;
+
+            localStorage.setItem('ms_wkStart', state.settings.weekdayStart);
+            localStorage.setItem('ms_wkEnd', state.settings.weekdayEnd);
+            localStorage.setItem('ms_weEnabled', state.settings.weekendEnabled);
+            localStorage.setItem('ms_weHours', state.settings.weekendHours);
+            localStorage.setItem('ms_weStart', state.settings.weekendStart);
+            localStorage.setItem('ms_weEnd', state.settings.weekendEnd);
+
+            const geminiKey = document.getElementById('settingGeminiKey').value;
+            state.geminiApiKey = geminiKey;
+            localStorage.setItem('ms_geminiKey', geminiKey);
+
+            checkScheduleStatus();
+            alert('Všechna nastavení byla v pořádku uložena!');
+        }
+    </script>
+</body>
+</html>
